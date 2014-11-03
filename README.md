@@ -29,9 +29,11 @@ If your input file format differs from the one above, please either modify the i
 
 ### output files:
 	[organism].out
-		tab-delimited file with same columns as [input], but with an additional column containing probability values
+		tab-delimited file with same columns as [input], but with an
+		additional column containing probability values
 	[organism].clusters.out
-		tab-delimited file with input and probabilities, but only for domains of gene clusters that have passed the filtering steps
+		tab-delimited file with input and probabilities, but only for
+		domains of gene clusters that have passed the filtering steps
 	[method].[organism].png
 
 ### requirements:
@@ -40,11 +42,11 @@ If your input file format differs from the one above, please either modify the i
  * matplotlib (optional)
 
 ### authors:
-	Original program by Peter Cimermancic & Michael Fischbach
-	Modifications Copyright 2014 Thaddeus D. Seher (@tdseher)
+Original program by Peter Cimermancic & Michael Fischbach.
+Modifications Copyright 2014 Thaddeus D. Seher ([@tdseher])
 
 ### references:
-Cimermancic P, Medema MH, Claesen J, Kurita K, Wieland Brown LC, et al. (2014) Insights into secondary metabolism from a global analysis of prokaryotic biosynthetic gene clusters. Cell 158: 412-421. doi: 10.1016/j.cell.2014.06.034
+Cimermancic P, Medema MH, Claesen J, Kurita K, Wieland Brown LC, et al. (2014) Insights into secondary metabolism from a global analysis of prokaryotic biosynthetic gene clusters. Cell 158: 412-421. doi: 10.1016/j.cell.2014.06.034 (http://www.sciencedirect.com/science/article/pii/S0092867414008265)
 
 ### positional arguments:
 	input                 input tab-delimited file
@@ -59,3 +61,5 @@ Cimermancic P, Medema MH, Claesen J, Kurita K, Wieland Brown LC, et al. (2014) I
 
 ###example:
 	$ python ClusterFinder.py example_input.txt example_org.out example_org.clusters.out
+
+[@tdseher]:http://twitter.com/tdseher
