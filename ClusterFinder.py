@@ -28,7 +28,7 @@ description:
   ClusterFinder - Predicting biosynthetic gene clusters in genomes
 
 input file format:
-  COLUMN DESCRIPTION:
+  COLUMN DESCRIPTION
        1 GeneID
        2 Sequencing status
        3 Organism name
@@ -50,14 +50,29 @@ input file format:
   either modify the input file, or change the way this script
   parses the lines.
 
+output file format:
+  COLUMN DESCRIPTION
+       1 Cluster
+       2 Scaffold OID
+       3 Locus Tag
+       4 Gene Start
+       5 Gene End
+       6 Pfam Start
+       7 Pfam End
+       8 PfamID
+       9 Probability
+
 output files:
-  [organism].out
-    tab-delimited file with same columns as [input], but with an
-    additional column containing probability values
-  [organism].clusters.out
-    tab-delimited file with input and probabilities, but only for
-    domains of gene clusters that have passed the filtering steps
-  [method].[organism].png
+  [output]/[organism].out
+    tab-delimited file with select columns from [input], but
+    with an additional column containing probability values
+  [output]/[organism].clusters.out
+    tab-delimited file with select columns from [input] and
+    probabilities, but with an additional column specifying
+    gene clusters for domains that have passed the filtering
+    steps
+  [output]/[method].[organism].png
+    line plot generated when "--graph" option is enabled
 
 requirements:
  * Python (2.X)
@@ -65,8 +80,8 @@ requirements:
  * matplotlib (optional)
   
 authors:
-  Original program by Peter Cimermancic & Michael Fischbach
-  Modifications Copyright {__date__} {__author__} ({__twitter__})
+  Original program by Peter Cimermancic & Michael Fischbach.
+  Modifications Copyright {__date__} {__author__} ({__twitter__}).
 
 reference:
   {__citation__}
