@@ -102,8 +102,8 @@ Combines a \*.gff (CDS annotations) file with a \*.domains (Pfam domains) file t
 Copyright 2014 Thaddeus D. Seher ([@tdseher](http://www.twitter.com/tdseher)).
 
 ### positional arguments:
-	prodigal.gff          Prodigal-generated *.gff file
-	hmmscan.domains       hmmscan-generated *.domains file
+	*.gff                 Prodigal/RefSeq *.gff file
+	*.hmmscan.domains     HMMer *.hmmscan.domains file (hmmsearch not yet supported)
 
 ### optional arguments:
 	-h, --help            show this help message and exit
@@ -130,13 +130,16 @@ Copyright 2014 Thaddeus D. Seher ([@tdseher](http://www.twitter.com/tdseher)).
 	$ wget ftp://ftp.ncbi.nih.gov/genomes/Bacteria/Streptomyces_avermitilis_MA_4680_uid57739/NC_003155.fna
 	
 	Run Prodigal on the *.fasta and save its output *.gff and *.prot.fasta
-	$ prodigal -i NC_003155.fna -a strep.prodigal.prot.fasta -f gff > strep.prodigal.gff 2> strep.prodigal.err
+	$ prodigal -i NC_003155.fna -a NC_003155.prodigal.faa -f gff > NC_003155.prodigal.gff 2> NC_003155.prodigal.err
 	
 	Run hmmscan on the protein output file (hmmsearch output not yet supported)
-	$ hmmscan -o strep.hmmscan.out --domtblout strep.hmmscan.domains Pfam-A.hmm strep.prodigal.prot.fasta
+	$ hmmscan -o NC_003155.hmmscan.out --domtblout NC_003155.hmmscan.domains Pfam-A.hmm NC_003155.prodigal.faa
 	
 	Use this program to convert to input required for ClusterFinder
-	$ python ClusterFinder-prepare.py strep.prodigal.gff strep.hmmscan.domains > strep.prepare.out
+	$ python {__program__} NC_003155.prodigal.gff NC_003155.hmmscan.domains
+	  --status finished --organism 'Streptomyces avermitilis MA-4680'
+	  --scaffold_id 'gi|148878541|dbj|BA000030.3|' --organism_id 227882
+	  > NC_003155.prepare.out
 	
 	Run ClusterFinder
-	$ python ClusterFinder.py strep.prepare.out strep.ClusterFinder.out Streptomyces_avermitilis_MA-4680
+	$ python ClusterFinder.py NC_003155.prepare.out NC_003155.ClusterFinder.out Streptomyces_avermitilis_MA-4680
