@@ -100,7 +100,8 @@ def parse_gff(filename):
                 if (split_line[2] == 'CDS'):
                     split_attributes = split_line[-1].split(";")
                     tag, uid = split_attributes[0].split("=")
-                    contig_num, cds_num = uid.split('_')
+                    #contig_num, cds_num = uid.split('_')
+                    cds_num = re.findall(r'(\d+)$', uid)[0]
                     output.append((split_line[0] + "_" + cds_num, split_line[3], split_line[4], split_line[6])) # contig_id, start, end, strand
     return output
 
