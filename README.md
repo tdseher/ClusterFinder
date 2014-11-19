@@ -1,43 +1,56 @@
 # ClusterFinder
 
+## ClusterFinder.py
+
 ### usage:
 ClusterFinder.py [-h] [-g] [-m {HMM,viterbi}] input output organism
 
 ### description:
 ClusterFinder - Predicting biosynthetic gene clusters in genomes
 
+ClusterFinder is a hidden Markov model-based probabilistic algorithm that aims to identify gene clusters of both known and unknown classes. ClusterFinder is based on a training set of 732 (minus 55) biosynthetic gene clusters (BGCs) plus some small molecule products. Also, Non-BGC regions were collected from 100 randomly selected genomes, defined as those regions without significant sequence similarity to the BGC state training set sequences.
+  
+To scan a genome for BGCs, first you must map your protein sequence to Pfam domains.
+  
+ClusterFinder assigns each domain a probability of being part of a gene cluster based on the frequencies at which these domains occur in the BGC and non-BGC training sets, and the identities of neighboring domains.
+  
+Since ClusterFinder is based solely on Pfam domain frequencies, and nature uses distinct assemblages of the same enzyme superfamilies to construct unrelated natural product classes, ClusterFinder exhibits relatively little training set bias and is capable of identifying new classes of gene clusters effectively.
+
+The ClusterFinder prediction algorithm for BGC identification is a two-state Hidden Markov Model (HMM), with one hidden state corresponding to biosynthetic gene clusters (BGC state) and a second hidden state corresponding to the rest of the genome (non-BCG state).
+
 ### input file format:
 COLUMN DESCRIPTION
- 1. GeneID
- 2. Sequencing status
- 3. Organism name
- 4. Scaffold OID
- 5. Organism OID
- 6. Locus Tag
- 7. Gene Start
- 8. Gene End
- 9. Strand
- 10. Pfam Template Start
- 11. Pfam Template End
- 12. Pfam Start
- 13. Pfam End
+ 1. Protein sequence ID (treated as Locus Tag)
+ 2. Sequencing status (unused)
+ 3. Organism name (unused)
+ 4. Scaffold ID
+ 5. Organism ID (unused)
+ 6. Pfam domain name
+ 7. Gene start
+ 8. Gene end
+ 9. Strand (unused)
+ 10. Pfam template start (unused)
+ 11. Pfam template end (unused)
+ 12. Pfam start
+ 13. Pfam end
  14. PfamID
- 15. Pfam E-score
- 16. Enzyme ID
+ 15. Pfam E-score (unused)
+ 16. Enzyme ID (unused)
 
 If your input file format differs from the one above, please either modify the input file, or change the way this script parses the lines.
 
 ### output file format:
 COLUMN DESCRIPTION
  1. Cluster
- 2. Scaffold OID
- 3. Locus Tag
- 4. Gene Start
- 5. Gene End
- 6. Pfam Start
- 7. Pfam End
- 8. PfamID
- 9. Probability
+ 2. Scaffold ID
+ 3. Pfam domain name
+ 4. Protein sequence ID (Locus Tag)
+ 5. Gene Start
+ 6. Gene End
+ 7. Pfam Start
+ 8. Pfam End
+ 9. Pfam ID
+ 10. Probability
 
 ### output files:
 	[output]/[organism].out
@@ -76,3 +89,54 @@ Cimermancic P, Medema MH, Claesen J, Kurita K, Wieland Brown LC, et al. (2014) I
 
 ###example:
 	$ python ClusterFinder.py example_input.txt example_org.out example_org.clusters.out
+
+
+## ClusterFinder-prepare.py
+### usage:
+ClusterFinder-prepare.py [-h] [-s STATUS] [-o ORGANISM] [-c SCAFFOLD_ID] [-i ORGANISM_ID] prodigal.gff hmmscan.domains
+
+### description:
+Combines a \*.gff (CDS annotations) file with a \*.domains (Pfam domains) file together to create the input necessary for ClusterFinder.
+
+### author:
+Copyright 2014 Thaddeus D. Seher ([@tdseher](http://www.twitter.com/tdseher)).
+
+### positional arguments:
+	prodigal.gff          Prodigal-generated *.gff file
+	hmmscan.domains       hmmscan-generated *.domains file
+
+### optional arguments:
+	-h, --help            show this help message and exit
+	-s STATUS, --status STATUS
+	                      sequencing satus (default: draft)
+	-o ORGANISM, --organism ORGANISM
+	                      organism name (default: unknown)
+	-c SCAFFOLD_ID, --scaffold_id SCAFFOLD_ID
+	                      scaffold id (default: unknown)
+	-i ORGANISM_ID, --organism_id ORGANISM_ID
+	                      organism id (default: unknown)
+
+### example:
+	First, download the Pfam-A.hmm database
+	$ wget ftp://ftp.sanger.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.gz
+	
+	Next, extract the database
+	$ gunzip Pfam-A.hmm.gz
+	
+	Run hmmpress to create 4 additional files
+	$ hmmpress Pfam-A.hmm
+	
+	Then obtain a genome or metagenome
+	$ wget ftp://ftp.ncbi.nih.gov/genomes/Bacteria/Streptomyces_avermitilis_MA_4680_uid57739/NC_003155.fna
+	
+	Run Prodigal on the *.fasta and save its output *.gff and *.prot.fasta
+	$ prodigal -i NC_003155.fna -a strep.prodigal.prot.fasta -f gff > strep.prodigal.gff 2> strep.prodigal.err
+	
+	Run hmmscan on the protein output file (hmmsearch output not yet supported)
+	$ hmmscan -o strep.hmmscan.out --domtblout strep.hmmscan.domains Pfam-A.hmm strep.prodigal.prot.fasta
+	
+	Use this program to convert to input required for ClusterFinder
+	$ python ClusterFinder-prepare.py strep.prodigal.gff strep.hmmscan.domains > strep.prepare.out
+	
+	Run ClusterFinder
+	$ python ClusterFinder.py strep.prepare.out strep.ClusterFinder.out Streptomyces_avermitilis_MA-4680

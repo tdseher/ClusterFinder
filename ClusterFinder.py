@@ -13,6 +13,7 @@ from Predict import *
 from FindClusters import *
 import re
 import argparse
+from operator import itemgetter
 
 # Define global variables
 __date__ = "2014"
@@ -27,24 +28,50 @@ __description__ = """\
 description:
   ClusterFinder - Predicting biosynthetic gene clusters in genomes
 
+  ClusterFinder is a hidden Markov model-based probabilistic algorithm
+  that aims to identify gene clusters of both known and unknown classes.
+  ClusterFinder is based on a training set of 732 (minus 55) biosynthetic
+  gene clusters (BGCs) plus some small molecule products. Also, Non-BGC
+  regions were collected from 100 randomly selected genomes, defined as
+  those regions without significant sequence similarity to the BGC state
+  training set sequences.
+  
+  To scan a genome for BGCs, first you must map your protein sequence
+  to Pfam domains.
+  
+  ClusterFinder assigns each domain a probability of being part of a gene
+  cluster based on the frequencies at which these domains occur in the
+  BGC and non-BGC training sets, and the identities of neighboring domains.
+  
+  Since ClusterFinder is based solely on Pfam domain frequencies, and
+  nature uses distinct assemblages of the same enzyme superfamilies to
+  construct unrelated natural product classes, ClusterFinder exhibits
+  relatively little training set bias and is capable of identifying new
+  classes of gene clusters effectively.
+  
+  The ClusterFinder prediction algorithm for BGC identification is a
+  two-state Hidden Markov Model (HMM), with one hidden state
+  corresponding to biosynthetic gene clusters (BGC state) and a second
+  hidden state corresponding to the rest of the genome (non-BCG state).
+
 input file format:
   COLUMN DESCRIPTION
-       1 GeneID
-       2 Sequencing status
-       3 Organism name
-       4 Scaffold OID
-       5 Organism OID
-       6 Locus Tag
-       7 Gene Start
-       8 Gene End
-       9 Strand
-      10 Pfam Template Start
-      11 Pfam Template End
-      12 Pfam Start
-      13 Pfam End
+       1 Protein sequence ID (treated as Locus Tag)
+       2 Sequencing status (unused)
+       3 Organism name (unused)
+       4 Scaffold ID
+       5 Organism ID (unused)
+       6 Pfam domain name
+       7 Gene start
+       8 Gene end
+       9 Strand (unused)
+      10 Pfam template start (unused)
+      11 Pfam template end (unused)
+      12 Pfam start
+      13 Pfam end
       14 PfamID
-      15 Pfam E-score
-      16 Enzyme ID
+      15 Pfam E-score (unused)
+      16 Enzyme ID (unused)
   
   If your input file format differs from the one above, please
   either modify the input file, or change the way this script
@@ -53,14 +80,15 @@ input file format:
 output file format:
   COLUMN DESCRIPTION
        1 Cluster
-       2 Scaffold OID
-       3 Locus Tag
-       4 Gene Start
-       5 Gene End
-       6 Pfam Start
-       7 Pfam End
-       8 PfamID
-       9 Probability
+       2 Scaffold ID
+       3 Pfam domain name
+       4 Protein sequence ID (Locus Tag)
+       5 Gene Start
+       6 Gene End
+       7 Pfam Start
+       8 Pfam End
+       9 PfamID
+      10 Probability
 
 output files:
   [output]/[organism].out
@@ -160,23 +188,24 @@ def main():
         
         ########## input file format parsing ##########
         ###### customize according to your input ######
+        gene_id = d[0]
         gene,pfamID = d[5],d[13].replace('pfam','PF')
         genstart,genestop = int(d[6]),int(d[7])
         try: pfamstart,pfamstop = int(d[11]),int(d[12])
         except ValueError: pfamstart,pfamstop = genstart,genestop
-        chain = d[3]
+        scaffold = d[3]
         ###############################################
         
         # - if gene has a Pfam annotation
         if pfamID != 'n/a':
-            DATA.append([chain, gene, genstart, genestop, pfamstart, pfamstop, pfamID])
+            DATA.append([scaffold, gene, gene_id, genstart, genestop, pfamstart, pfamstop, pfamID])
         # - else
         else:
-            DATA.append([chain, gene, genstart, genestop, pfamstart, pfamstop, 'Q'])
+            DATA.append([scaffold, gene, gene_id, genstart, genestop, pfamstart, pfamstop, 'Q'])
     
     
     # --- sort Pfams as they appear in the genome
-    PfamSorted = sorted(DATA,key = itemgetter(0,2,4))
+    PfamSorted = sorted(DATA, key=itemgetter(0,3,5))
     
     
     # --- filter out the repeats (optional)
@@ -199,7 +228,7 @@ def main():
     
     # - check that there are Pfam domain in the data
     pfpatt = re.compile(r"""PF+\d+\d+\d+\d+\d""")
-    if len([re.match(pfpatt,p[-1]) for p in PfamSorted])==0:
+    if len([re.match(pfpatt, p[-1]) for p in PfamSorted])==0:
         print 'There is no Pfam domain in you dataset!'
         exit()
     

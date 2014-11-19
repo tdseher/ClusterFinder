@@ -29,56 +29,54 @@ def get_clusters(file,X=2,TRSH=0.2):
     NAME = '_'.join(D[0].strip().split('\t')[2].split(' '))
 
     for n,d in enumerate(D):
-
         d = d.strip().split('\t')
-
+        
         seqID = d[0]
-        geneID = d[1]
-        gstart = int(d[2])
-        gstop = int(d[3])
-        pstart = int(d[4]) + gstart
-        pstop = int(d[5]) + gstart
-        pfamID = d[6]
-        Prob = float(d[7])
-
+        geneFXN = d[1]
+        geneID = d[2]
+        gstart = int(d[3])
+        gstop = int(d[4])
+        pstart = int(d[5]) + gstart
+        pstop = int(d[6]) + gstart
+        pfamID = d[7]
+        Prob = float(d[8])
+    
         if geneID not in visitedGenes:
             visitedGenes.append(geneID)
         
         if Prob >= TRSH:
             Genes.append( geneID )
-
+    
     for n,d in enumerate(D):
-
         d = d.strip().split('\t')
-        geneID = d[1]
+        geneID = d[2]
     
         if geneID in Genes:
-	    Pfams.append( (visitedGenes.index(geneID),d) )
+            Pfams.append( (visitedGenes.index(geneID),d) )
     
     CLUSTERS = []
     cluster = []
     last = 0
-
+    
     for x in xrange(len(Pfams)-1):            
         if (Pfams[x][1] == Pfams[x+1][0] or Pfams[x+1][0]-Pfams[x][0] <= X) and Pfams[x][1][0] == Pfams[x+1][1][0]:
             cluster.append(Pfams[x][1])
             last = x
-	
+        
         else:
-
             if last == x-1 and Pfams[x][1][0] == Pfams[x-1][1][0]:
                 cluster.append(Pfams[x][1])
             if len(cluster) > 0:
                 CLUSTERS.append(cluster)
                 cluster = []
-	
-	if x+2 == len(Pfams):
-	    #cluster.append(Pfams[x][1])
-	    cluster.append(Pfams[x+1][1])
+        
+        if x+2 == len(Pfams):
+            #cluster.append(Pfams[x][1])
+            cluster.append(Pfams[x+1][1])
             if len(cluster) > 0:
                 CLUSTERS.append(cluster)
+    print "Clustering completed!"
     return CLUSTERS,NAME
-
 
 '''
 import glob
@@ -89,16 +87,13 @@ N = 0
 filtering = 1
 
 for fil in files:
-
     T,Name = get_clusters(fil,X=2,TRSH=0.2)
     
     for n,t in enumerate(T):
-
         if filtering == 1:
             Size, Score = int(t[-1][7]) - int(t[0][6]), np.mean(np.array([float(t[i][16]) for i in xrange(len(t))]))
-
-            if Size < 2000 or Score < 0.4: continue
-        
+            if Size < 2000 or Score < 0.4:
+                continue
         N += 1
         for m,g in enumerate(t):
             name = Name + '_%i' % n
