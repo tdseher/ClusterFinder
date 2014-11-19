@@ -136,10 +136,7 @@ Copyright 2014 Thaddeus D. Seher ([@tdseher](http://www.twitter.com/tdseher)).
 	$ hmmscan -o NC_003155.hmmscan.out --domtblout NC_003155.hmmscan.domains Pfam-A.hmm NC_003155.prodigal.faa
 	
 	Use this program to convert to input required for ClusterFinder
-	$ python {__program__} NC_003155.prodigal.gff NC_003155.hmmscan.domains
-	  --status finished --organism 'Streptomyces avermitilis MA-4680'
-	  --scaffold_id 'gi|148878541|dbj|BA000030.3|' --organism_id 227882
-	  > NC_003155.prepare.out
+	$ python ClusterFinder-prepare.py NC_003155.prodigal.gff NC_003155.hmmscan.domains --status finished --organism 'Streptomyces avermitilis MA-4680' --scaffold_id 'gi|148878541|dbj|BA000030.3|' --organism_id 227882 > NC_003155.prepare.out
 	
 	Run ClusterFinder
 	$ python ClusterFinder.py NC_003155.prepare.out NC_003155.ClusterFinder.out Streptomyces_avermitilis_MA-4680
