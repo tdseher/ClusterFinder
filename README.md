@@ -88,7 +88,8 @@ Cimermancic P, Medema MH, Claesen J, Kurita K, Wieland Brown LC, et al. (2014) I
 	                      Forward-Backward HMM or Viterbi alogirthm (default: HMM)
 
 ###example:
-	$ python ClusterFinder.py example_input.txt example_org.out example_org.clusters.out
+	$ cd example
+	$ python ClusterFinder.py --graph example.input example.ClusterFinder Streptomyces_avermitilis_MA-4680
 
 ## ClusterFinder-prepare.py
 ### usage:

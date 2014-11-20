@@ -118,7 +118,9 @@ reference:
 
 __epilog__ = """\
 example:
-  $ python {__program__} example_input.txt example_org.out example_org.clusters.out
+  $ cd example
+  $ python {__program__} --graph example.input example.ClusterFinder
+    Streptomyces_avermitilis_MA-4680
 
 """.format(**locals())
 
