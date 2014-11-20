@@ -33,7 +33,7 @@ COLUMN DESCRIPTION
  11. Pfam template end (unused)
  12. Pfam start
  13. Pfam end
- 14. PfamID
+ 14. Pfam ID
  15. Pfam E-score (unused)
  16. Enzyme ID (unused)
 
@@ -90,20 +90,25 @@ Cimermancic P, Medema MH, Claesen J, Kurita K, Wieland Brown LC, et al. (2014) I
 ###example:
 	$ python ClusterFinder.py example_input.txt example_org.out example_org.clusters.out
 
-
 ## ClusterFinder-prepare.py
 ### usage:
-ClusterFinder-prepare.py [-h] [-s STATUS] [-o ORGANISM] [-c SCAFFOLD_ID] [-i ORGANISM_ID] prodigal.gff hmmscan.domains
+ClusterFinder-prepare.py [-h] [-s STATUS] [-o ORGANISM] [-c SCAFFOLD_ID] [-i ORGANISM_ID] \*.gff \*.pfam_scan
 
 ### description:
-Combines a \*.gff (CDS annotations) file with a \*.domains (Pfam domains) file together to create the input necessary for ClusterFinder.
+Combines a \*.gff (CDS annotations) file with a \*.pfam_scan (Pfam domains) file together to create the input necessary for ClusterFinder.
+
+### requirements:
+ * [Python](http://www.python.org/)
+ * [HMMer 3.1](http://hmmer.janelia.org/)
+ * [pfam_scan.pl](ftp://ftp.sanger.ac.uk/pub/databases/Pfam/Tools/PfamScan.tar.gz)
+ * [Pfam-A.hmm](ftp://ftp.sanger.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.gz)
 
 ### author:
 Copyright 2014 Thaddeus D. Seher ([@tdseher](http://www.twitter.com/tdseher)).
 
 ### positional arguments:
 	*.gff                 Prodigal/RefSeq *.gff file
-	*.hmmscan.domains     HMMer *.hmmscan.domains file (hmmsearch not yet supported)
+	*.pfam_scan           pfam_scan.pl *.pfam_scan file
 
 ### optional arguments:
 	-h, --help            show this help message and exit
@@ -117,26 +122,36 @@ Copyright 2014 Thaddeus D. Seher ([@tdseher](http://www.twitter.com/tdseher)).
 	                      organism id (default: unknown)
 
 ### example:
-	First, download the Pfam-A.hmm database
+	First, create a directory to store the Pfam databases
+	$ mkdir Pfam-A+B.hmm
+	$ cd Pfam-A+B.hmm
+	
+	Download the Pfam-A.hmm and Pfam-B.hmm databases for use with pfam_scan.pl
 	$ wget ftp://ftp.sanger.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.gz
+	$ wget ftp://ftp.sanger.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.dat.gz
+	$ wget ftp://ftp.sanger.ac.uk/pub/databases/Pfam/current_release/Pfam-B.hmm.gz
+	$ wget ftp://ftp.sanger.ac.uk/pub/databases/Pfam/current_release/Pfam-B.hmm.dat.gz
+	$ ftp://ftp.sanger.ac.uk/pub/databases/Pfam/current_release/active_site.dat.gz
 	
-	Next, extract the database
-	$ gunzip Pfam-A.hmm.gz
+	Next, extract the database files
+	$ gunzip *.gz
 	
-	Run hmmpress to create 4 additional files
+	Run hmmpress to create 4 additional files for each database
 	$ hmmpress Pfam-A.hmm
+	$ hmmpress Pfam-B.hmm
 	
-	Then obtain a genome or metagenome
+	Then obtain a sample genome or metagenome
+	$ cd ..
 	$ wget ftp://ftp.ncbi.nih.gov/genomes/Bacteria/Streptomyces_avermitilis_MA_4680_uid57739/NC_003155.fna
 	
-	Run Prodigal on the *.fasta and save its output *.gff and *.prot.fasta
+	Run Prodigal on the genome FASTA and save its output as GFF and protein FASTA (include "-p meta" if scanning a metagenome)
 	$ prodigal -i NC_003155.fna -a NC_003155.prodigal.faa -f gff > NC_003155.prodigal.gff 2> NC_003155.prodigal.err
 	
-	Run hmmscan on the protein output file (hmmsearch output not yet supported)
-	$ hmmscan -o NC_003155.hmmscan.out --domtblout NC_003155.hmmscan.domains Pfam-A.hmm NC_003155.prodigal.faa
+	Run pfam_scan.pl on the protein output file (ClusterFinder does not use Pfam-B.hmm domains)
+	$ pfam_scan.pl -outfile NC_003155.pfam_scan -fasta NC_003155.prodigal.faa -dir Pfam-A+B.hmm
 	
 	Use this program to convert to input required for ClusterFinder
-	$ python ClusterFinder-prepare.py NC_003155.prodigal.gff NC_003155.hmmscan.domains --status finished --organism 'Streptomyces avermitilis MA-4680' --scaffold_id 'gi|148878541|dbj|BA000030.3|' --organism_id 227882 > NC_003155.prepare.out
+	$ python ClusterFinder-prepare.py NC_003155.prodigal.gff NC_003155.pfam_scan --status finished --organism 'Streptomyces avermitilis MA-4680' --scaffold_id 'gi|148878541|dbj|BA000030.3|' --organism_id 227882 > NC_003155.prepare
 	
 	Run ClusterFinder
-	$ python ClusterFinder.py NC_003155.prepare.out NC_003155.ClusterFinder.out Streptomyces_avermitilis_MA-4680
+	$ python ClusterFinder.py NC_003155.prepare NC_003155.ClusterFinder Streptomyces_avermitilis_MA-4680

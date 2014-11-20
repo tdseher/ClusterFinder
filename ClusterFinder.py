@@ -69,7 +69,7 @@ input file format:
       11 Pfam template end (unused)
       12 Pfam start
       13 Pfam end
-      14 PfamID
+      14 Pfam ID
       15 Pfam E-score (unused)
       16 Enzyme ID (unused)
   
@@ -87,7 +87,7 @@ output file format:
        6 Gene End
        7 Pfam Start
        8 Pfam End
-       9 PfamID
+       9 Pfam ID
       10 Probability
 
 output files:
@@ -103,9 +103,9 @@ output files:
     line plot generated when "--graph" option is enabled
 
 requirements:
- * Python (2.X)
- * numpy
- * matplotlib (optional)
+  Python (http://www.python.org/)
+  NumPy (http://www.numpy.org/)
+  Matplotlib (optional) (http://matplotlib.org/)
   
 authors:
   Original program by Peter Cimermancic & Michael Fischbach.

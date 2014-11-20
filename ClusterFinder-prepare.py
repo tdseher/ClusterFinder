@@ -11,8 +11,14 @@ __twitter__ = "@tdseher"
 __program__ = os.path.basename(sys.argv[0])
 __description__ = """\
 description:
-  Combines a *.gff (CDS annotations) file with a *.domains (Pfam domains)
+  Combines a *.gff (CDS annotations) file with a *.pfam_scan (Pfam domains)
   file together to create the input necessary for ClusterFinder.
+
+requirements:
+  Python (http://www.python.org/)
+  HMMer 3.1 (http://hmmer.janelia.org/)
+  pfam_scan.pl (ftp://ftp.sanger.ac.uk/pub/databases/Pfam/Tools/PfamScan.tar.gz)
+  Pfam-A.hmm (ftp://ftp.sanger.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.gz)
 
 author:
   Copyright {__date__} {__author__} ({__twitter__}).
@@ -21,32 +27,46 @@ author:
 
 __epilog__ = """\
 example:
-  First, download the Pfam-A.hmm database
+  First, create a directory to store the Pfam databases
+  $ mkdir Pfam-A+B.hmm
+  $ cd Pfam-A+B.hmm
+  
+  Download the Pfam-A.hmm and Pfam-B.hmm databases for use with pfam_scan.pl
   $ wget ftp://ftp.sanger.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.gz
+  $ wget ftp://ftp.sanger.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.dat.gz
+  $ wget ftp://ftp.sanger.ac.uk/pub/databases/Pfam/current_release/Pfam-B.hmm.gz
+  $ wget ftp://ftp.sanger.ac.uk/pub/databases/Pfam/current_release/Pfam-B.hmm.dat.gz
+  $ ftp://ftp.sanger.ac.uk/pub/databases/Pfam/current_release/active_site.dat.gz
   
-  Next, extract the database
-  $ gunzip Pfam-A.hmm.gz
+  Next, extract the database files
+  $ gunzip *.gz
   
-  Run hmmpress to create 4 additional files
+  Run hmmpress to create 4 additional files for each database
   $ hmmpress Pfam-A.hmm
+  $ hmmpress Pfam-B.hmm
   
-  Then obtain a genome or metagenome
+  Then obtain a sample genome or metagenome
+  $ cd ..
   $ wget ftp://ftp.ncbi.nih.gov/genomes/Bacteria/Streptomyces_avermitilis_MA_4680_uid57739/NC_003155.fna
   
-  Run Prodigal on the *.fasta and save its output *.gff and *.prot.fasta
-  $ prodigal -i NC_003155.fna -a NC_003155.prodigal.faa -f gff > NC_003155.prodigal.gff 2> NC_003155.prodigal.err
-
-  Run hmmscan on the protein output file (hmmsearch output not yet supported)
-  $ hmmscan -o NC_003155.hmmscan.out --domtblout NC_003155.hmmscan.domains Pfam-A.hmm NC_003155.prodigal.faa
+  Run Prodigal on the genome FASTA and save its output as GFF and
+  protein FASTA (include "-p meta" if scanning a metagenome)
+  $ prodigal -i NC_003155.fna -a NC_003155.prodigal.faa -f gff
+    > NC_003155.prodigal.gff 2> NC_003155.prodigal.err
+  
+  Run pfam_scan.pl on the protein output file (ClusterFinder does
+  not use Pfam-B.hmm domains)
+  $ pfam_scan.pl -outfile NC_003155.pfam_scan -fasta NC_003155.prodigal.faa
+    -dir Pfam-A+B.hmm
   
   Use this program to convert to input required for ClusterFinder
-  $ python {__program__} NC_003155.prodigal.gff NC_003155.hmmscan.domains
+  $ python {__program__} NC_003155.prodigal.gff NC_003155.pfam_scan
     --status finished --organism 'Streptomyces avermitilis MA-4680'
     --scaffold_id 'gi|148878541|dbj|BA000030.3|' --organism_id 227882
-    > NC_003155.prepare.out
+    > NC_003155.prepare
   
   Run ClusterFinder
-  $ python ClusterFinder.py NC_003155.prepare.out NC_003155.ClusterFinder.out Streptomyces_avermitilis_MA-4680
+  $ python ClusterFinder.py NC_003155.prepare NC_003155.ClusterFinder Streptomyces_avermitilis_MA-4680
 
 """.format(**locals())
 
@@ -70,7 +90,7 @@ def parse_arguments():
     
     # Add mandatory arguments
     parser.add_argument("gff", metavar="*.gff", help="Prodigal/RefSeq *.gff file")
-    parser.add_argument("domains", metavar="*.hmmscan.domains", help="HMMer *.hmmscan.domains file (hmmsearch not yet supported)")
+    parser.add_argument("domains", metavar="*.pfam_scan", help="pfam_scan.pl *.pfam_scan file")
     
     # Add optional arguments
     parser.add_argument('-s', '--status', type=str, default="draft", help='sequencing satus (default: draft)')
@@ -115,7 +135,9 @@ def parse_domains(filename):
     # open "domains" file
     with open(filename, 'r') as flo:
         for line in flo:
-            if not line.startswith('#'):
+            line = line.rstrip()
+            if (not line.startswith('#')) and (len(line) > 0):
+                # hmmscan file
                 #                                                                                          --- full sequence --- -------------- this domain -------------   hmm coord   ali coord   env coord
                 #   target name        accession   tlen query name                       accession   qlen   E-value  score  bias   #  of  c-Evalue  i-Evalue  score  bias  from    to  from    to  from    to  acc description of target
                 #  ------------------- ---------- -----             -------------------- ---------- ----- --------- ------ ----- --- --- --------- --------- ------ ----- ----- ----- ----- ----- ----- ----- ---- ---------------------
@@ -124,12 +146,31 @@ def parse_domains(filename):
                 # Endonuclease_7       PF02945.10    82 lcl|BA000030.3_prot_BAC67712.1_3 -            181   3.6e-19   68.2   1.4   1   1   2.4e-23   3.6e-19   68.2   1.4     2    80    41   136    40   138 0.87 Recombination endonuclease VII
                 # DUF2249              PF10006.4     69 lcl|BA000030.3_prot_BAC67713.1_4 -            168     0.093   12.3   0.0   1   1   1.4e-05      0.21   11.1   0.0    27    48   101   122    91   146 0.80 Uncharacterized conserved protein (DUF2249)
                 # zf-CGNR              PF11706.3     44 lcl|BA000030.3_prot_BAC67714.1_5 -            312       6.7    6.3  16.5   1   1    0.0056        83    2.8  16.5     2    44   235   284   234   284 0.73 CGNR zinc finger
-                split_line = re.split(r'\s+', line.rstrip(), 22)
+                # 00000000000000000    111111111         33333333333333333333333333                                     7                                                    15    16               19    20
+                #split_line = re.split(r'\s+', line.rstrip(), 22)
+                #try:
+                #    # gene, pfam_t-start, pfam_t-end, pfam_start, pfam_end, pfam_id, e-score, enzyme
+                #    output[split_line[3]].append((split_line[0], split_line[15], split_line[16], split_line[19], split_line[20], split_line[1], split_line[7], 'n/a'))
+                #except KeyError:
+                #    output[split_line[3]] = [(split_line[0], split_line[15], split_line[16], split_line[19], split_line[20], split_line[1], split_line[7], 'n/a')]
+                
+                # pfam_scan.pl file
+                # <seq id>              <alignment start> <alignment end> <envelope start> <envelope end> <hmm acc>   <hmm name>        <type> <hmm start> <hmm end> <hmm length> <bit score> <E-value> <significance> <clan>
+                # gi|29826542|ref|NP_821176.1|          6              53                3             74 PF04851.10  ResIII            Family          26        71          184        36.1   5.5e-09              1 CL0023
+                # gi|29826543|ref|NP_821177.1|         41             136               40            138 PF02945.10  Endonuclease_7    Domain           2        80           82        68.2   3.6e-19              1 CL0263
+                # gi|29826546|ref|NP_821180.1|          2             209                1            210 PF04851.10  ResIII            Family           2       183          184        56.5   2.9e-15              1 CL0023
+                # gi|29826546|ref|NP_821180.1|        370             447              366            448 PF00271.26  Helicase_C        Family          11        77           78        21.3   0.00017              1 CL0023
+                # gi|29826546|ref|NP_821180.1|        567             640              565            640 PF03457.9   HA                Domain           3        68           68        59.0   3.4e-16              1 No_clan
+                # gi|29826546|ref|NP_821180.1|        641             715              641            716 PF03457.9   HA                Domain           1        67           68        48.7   5.9e-13              1 No_clan
+                # gi|29826546|ref|NP_821180.1|        719             785              718            786 PF03457.9   HA                Domain           2        67           68        43.6   2.3e-11              1 No_clan
+                # gi|29826546|ref|NP_821180.1|        803             872              800            873 PF03457.9   HA                Domain           5        67           68        49.8   2.6e-13              1 No_clan
+                
+                split_line = re.split(r'\s+', line)
                 try:
                     # gene, pfam_t-start, pfam_t-end, pfam_start, pfam_end, pfam_id, e-score, enzyme
-                    output[split_line[3]].append((split_line[0], split_line[15], split_line[16], split_line[19], split_line[20], split_line[1], split_line[7], 'n/a'))
+                    output[split_line[0]].append((split_line[6], split_line[8], split_line[9], split_line[3], split_line[4], split_line[5], split_line[11], 'n/a'))
                 except KeyError:
-                    output[split_line[3]] = [(split_line[0], split_line[15], split_line[16], split_line[19], split_line[20], split_line[1], split_line[7], 'n/a')]
+                    output[split_line[0]] = [(split_line[6], split_line[8], split_line[9], split_line[3], split_line[4], split_line[5], split_line[11], 'n/a')]
     return output
 
 if (__name__ == '__main__'):
