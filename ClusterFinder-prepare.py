@@ -190,11 +190,15 @@ if (__name__ == '__main__'):
         # If that does not exist, then we try the RefSeqID
         except KeyError:
             try:
+                # We loop through all the keys for the genes with Pfam domains
                 for prot_id in mappings:
                     temp = prot_id.split("|")
                     if (gene[4] == temp[3]):
                         for domain in mappings[prot_id]:
                             print "\t".join([prot_id, args.status, args.organism, args.scaffold_id, args.organism_id, domain[0], gene[1], gene[2], gene[3], domain[1], domain[2], domain[3], domain[4], convert_pfam_id(domain[5]), domain[6], domain[7]])
+                        # once we find the correct gene, we can stop looking
+                        break
+                # If we did not find that the gene had any Pfam domains, then we print the entry with several 'n/a' fields
                 else:
                     if not args.exclude_unmatched:
                         print "\t".join([gene[0], args.status, args.organism, args.scaffold_id, args.organism_id, 'n/a', gene[1], gene[2], gene[3], 'n/a', 'n/a', 'n/a', 'n/a', 'n/a', 'n/a', 'n/a'])
