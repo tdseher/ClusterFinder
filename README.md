@@ -108,19 +108,21 @@ Combines a \*.gff (CDS annotations) file with a \*.pfam_scan (Pfam domains) file
 Copyright 2014 Thaddeus D. Seher ([@tdseher](http://www.twitter.com/tdseher)).
 
 ### positional arguments:
-	*.gff                 Prodigal/RefSeq *.gff file
-	*.pfam_scan           pfam_scan.pl *.pfam_scan file
+	*.gff           Prodigal/RefSeq *.gff file
+	*.pfam_scan     pfam_scan.pl *.pfam_scan file
 
 ### optional arguments:
-	-h, --help            show this help message and exit
+	-h, --help      show this help message and exit
 	-s STATUS, --status STATUS
-	                      sequencing satus (default: draft)
+	                sequencing satus (default: draft)
 	-o ORGANISM, --organism ORGANISM
-	                      organism name (default: unknown)
+                    organism name (default: unknown)
 	-c SCAFFOLD_ID, --scaffold_id SCAFFOLD_ID
-	                      scaffold id (default: unknown)
+	                scaffold id (default: unknown)
 	-i ORGANISM_ID, --organism_id ORGANISM_ID
-	                      organism id (default: unknown)
+	                organism id (default: unknown)
+	-e, --exclude_unmatched
+	                do not include genes without Pfam domains (default: False)
 
 ### example:
 	First, create a directory to store the Pfam databases

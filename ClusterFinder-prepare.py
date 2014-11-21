@@ -97,6 +97,7 @@ def parse_arguments():
     parser.add_argument('-o', '--organism', type=str, default="unknown", help='organism name (default: unknown)')
     parser.add_argument('-c', '--scaffold_id', type=str, default="unknown", help='scaffold id (default: unknown)')
     parser.add_argument('-i', '--organism_id', type=str, default="unknown", help='organism id (default: unknown)')
+    parser.add_argument('-e', '--exclude_unmatched', action='store_true', help='do not include genes without Pfam domains (default: False)')
     
     # parse the arguments
     args = parser.parse_args()
@@ -105,8 +106,8 @@ def parse_arguments():
 
 def convert_pfam_id(input_id):
     # removes the decimal from PFAM id
-    new_id, extra = input_id.split(".", 1)
-    return new_id
+    split_id = input_id.split(".", 1)
+    return split_id[0]
 
 def parse_gff(filename):
     output = []
@@ -194,6 +195,11 @@ if (__name__ == '__main__'):
                     if (gene[4] == temp[3]):
                         for domain in mappings[prot_id]:
                             print "\t".join([prot_id, args.status, args.organism, args.scaffold_id, args.organism_id, domain[0], gene[1], gene[2], gene[3], domain[1], domain[2], domain[3], domain[4], convert_pfam_id(domain[5]), domain[6], domain[7]])
+                else:
+                    if not args.exclude_unmatched:
+                        print "\t".join([gene[0], args.status, args.organism, args.scaffold_id, args.organism_id, 'n/a', gene[1], gene[2], gene[3], 'n/a', 'n/a', 'n/a', 'n/a', 'n/a', 'n/a', 'n/a'])
+                    
             except IndexError:
-                pass
+                if not args.exclude_unmatched:
+                    print "\t".join([gene[0], args.status, args.organism, args.scaffold_id, args.organism_id, 'n/a', gene[1], gene[2], gene[3], 'n/a', 'n/a', 'n/a', 'n/a', 'n/a', 'n/a', 'n/a'])
     # program end
