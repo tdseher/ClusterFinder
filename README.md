@@ -134,7 +134,7 @@ Copyright 2014 Thaddeus D. Seher ([@tdseher](http://www.twitter.com/tdseher)).
 	$ wget ftp://ftp.sanger.ac.uk/pub/databases/Pfam/current_release/Pfam-A.hmm.dat.gz
 	$ wget ftp://ftp.sanger.ac.uk/pub/databases/Pfam/current_release/Pfam-B.hmm.gz
 	$ wget ftp://ftp.sanger.ac.uk/pub/databases/Pfam/current_release/Pfam-B.hmm.dat.gz
-	$ ftp://ftp.sanger.ac.uk/pub/databases/Pfam/current_release/active_site.dat.gz
+	$ wget ftp://ftp.sanger.ac.uk/pub/databases/Pfam/current_release/active_site.dat.gz
 	
 	Next, extract the database files
 	$ gunzip *.gz
